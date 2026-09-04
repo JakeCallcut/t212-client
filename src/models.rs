@@ -29,3 +29,36 @@ pub struct Investments {
     pub total_cost: f64,
     pub unrealized_profit_loss: f64,
 }
+
+/// from GET /equity/positions
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Position {
+    pub instrument: Instrument,
+    pub quantity: f64,
+    pub quantity_available_for_trading: f64,
+    pub quantity_in_pies: f64,
+    pub average_price_paid: f64,
+    pub current_price: f64,
+    pub created_at: String, // ISO 8601 timestamp; kept as String for now
+    pub wallet_impact: PositionWalletImpact,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Instrument {
+    pub ticker: String,
+    pub name: String,
+    pub isin: String,
+    pub currency: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PositionWalletImpact {
+    pub currency: String,
+    pub current_value: f64,
+    pub total_cost: f64,
+    pub unrealized_profit_loss: f64,
+    pub fx_impact: Option<f64>, // null on most rows; a number when FX applies
+}

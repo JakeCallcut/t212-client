@@ -2,6 +2,7 @@ mod auth;
 mod config;
 mod http;
 mod models;
+mod utils;
 
 use owo_colors::OwoColorize;
 use clap::{Parser, Subcommand};
@@ -75,10 +76,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let client = http::Client::new(config);
 
             let body = client.get("/equity/positions")?;
+            let mut positions: Vec<models::Position> = serde_json::from_str(&body)?;
 
-            // TODO: Format JSON to typed output and clean cli
-            let parsed: serde_json::Value = serde_json::from_str(&body)?;
-            println!("{}", serde_json::to_string_pretty(&parsed)?);
+            // Sort by current value, largest first.
+            positions.sort_by(|a, b| {
+                b.wallet_impact
+                    .current_value
+                    .partial_cmp(&a.wallet_impact.current_value)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            });
+
+            print_positions(&positions);
         }
         Some(Command::Analytics) => println!("Analytics: not implemented yet"),
     }
@@ -138,6 +146,7 @@ fn print_pl(label: &str, value: f64, cost: f64, currency: &str) {
     println!("  {:<18} {}", label.dimmed(), coloured);
 }
 
+///format and print cash allocations
 fn print_cash(s: &models::AccountSummary) {
     let c = &s.currency;
 
@@ -149,3 +158,68 @@ fn print_cash(s: &models::AccountSummary) {
     println!("  {:<18} {:>12.2} {c}", "Reserved".dimmed(), (s.cash.reserved_for_orders));
     println!();
 }
+
+///format and print table of open positions
+fn print_positions(positions: &[models::Position]) {
+    if positions.is_empty() {
+        println!("{}", "No open positions.".dimmed());
+        return;
+    }
+
+    // Wallet currency is your account currency; consistent across rows.
+    let wallet_ccy = &positions[0].wallet_impact.currency;
+
+    println!();
+    println!("{} {}", "Open positions".blue().bold(), "(by descending value)".blue().dimmed());
+    println!(
+        "  {:<30} {:>10} {:>14} {:>14} {:>20}",
+        "Instrument".dimmed(),
+        "Qty".dimmed(),
+        "Value".dimmed(),
+        "Cost".dimmed(),
+        "P&L".dimmed(),
+    );
+
+    let mut total_value = 0.0;
+    let mut total_cost = 0.0;
+
+    for p in positions {
+        let w = &p.wallet_impact;
+        total_value += w.current_value;
+        total_cost += w.total_cost;
+
+        let pct = if w.total_cost != 0.0 {
+            w.unrealized_profit_loss / w.total_cost * 100.0
+        } else {
+            0.0
+        };
+        let pl = format!("{:>10.2} ({:+.1}%)", w.unrealized_profit_loss, pct);
+        let pl = if w.unrealized_profit_loss >= 0.0 {
+            pl.green().to_string()
+        } else {
+            pl.red().to_string()
+        };
+
+        println!(
+            "  {:<30} {:>10.4} {:>14.2} {:>14.2} {:>30}",
+            crate::utils::truncate(&p.instrument.name, 30), p.quantity, w.current_value, w.total_cost, pl,
+        );
+    }
+
+    let total_pl = total_value - total_cost;
+    let total_pct = if total_cost != 0.0 { total_pl / total_cost * 100.0 } else { 0.0 };
+    let total_line = format!("{total_pl:>10.2} ({total_pct:+.1}%)");
+    let total_line = if total_pl >= 0.0 { total_line.green().to_string() } else { total_line.red().to_string() };
+
+    println!(
+        "  {:<30} {:>10} {:>14.2} {:>14.2} {:>30}",
+        "TOTAL".bold(),
+        "",
+        total_value.bold(),
+        total_cost.bold(),
+        total_line.bold(),
+    );
+    println!("  {}", format!("all values in {wallet_ccy}").dimmed());
+    println!();
+}
+
