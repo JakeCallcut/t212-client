@@ -25,7 +25,7 @@ using the `t212` command, you can fetch account cash, positions, order history, 
 - `t212 auth` - enter Trading212 credentials
 - `t212 deauth` - delete Trading212 credentials
 - `t212 status` - display connection status
-- (not implemented)`t212 overview` - show overall portfolio information
-- (not implemented)`t212 cash` - show cash allocation
-- (not implemented)`t212 positions` - show open positions
+- `t212 overview` - show overall portfolio information
+- `t212 cash` - show cash allocation
+- `t212 positions` - show open positions
 - (not implemented)`t212 analytics` - show derived metrics from open positions
