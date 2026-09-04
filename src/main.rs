@@ -46,10 +46,37 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
-        Command::Overview => println!("Overview: not implemented yet"),
+        Command::Overview => {
+            let config = config::Config::load(config::Environment::Live)?;
+            let client = http::Client::new(config);
+
+            let body = client.get("/equity/account/summary")?;
+
+            // TODO: Format JSON to typed output and clean cli
+            let parsed: serde_json::Value = serde_json::from_str(&body)?;
+            println!("{}", serde_json::to_string_pretty(&parsed)?);
+        }
+        Command::Cash => {
+            let config = config::Config::load(config::Environment::Live)?;
+            let client = http::Client::new(config);
+
+            let body = client.get("/equity/account/cash")?;
+
+            // TODO: Format JSON to typed output and clean cli
+            let parsed: serde_json::Value = serde_json::from_str(&body)?;
+            println!("{}", serde_json::to_string_pretty(&parsed)?);
+        }
+        Command::Positions => {
+            let config = config::Config::load(config::Environment::Live)?;
+            let client = http::Client::new(config);
+
+            let body = client.get("/equity/positions")?;
+
+            // TODO: Format JSON to typed output and clean cli
+            let parsed: serde_json::Value = serde_json::from_str(&body)?;
+            println!("{}", serde_json::to_string_pretty(&parsed)?);
+        }
         Command::Analytics => println!("Analytics: not implemented yet"),
-        Command::Cash => println!("cash: not implemented yet"),
-        Command::Positions => println!("positions: not implemented yet"),
     }
     Ok(())
 }
