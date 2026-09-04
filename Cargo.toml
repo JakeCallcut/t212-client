@@ -1,13 +1,13 @@
 [package]
-name = "t212client"
+name = "t212-client"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.83"
 
-[lib]
-# Must match the #[pymodule] fn name in src/lib.rs.
-name = "_core"
-crate-type = ["cdylib"]
+# command will be 't212', even though the crate is t212-client
+[[bin]]
+name = "t212"
+path = "src/main.rs"
 
 [dependencies]
-pyo3 = { version = "0.29", features = ["abi3-py39", "extension-module"] }
+clap = { version = "4", features = ["derive"] }

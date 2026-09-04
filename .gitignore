@@ -1,27 +1,6 @@
 # Rust
 /target/
 
-# Python build artefacts
-/dist/
-/build/
-*.egg-info/
-__pycache__/
-*.py[cod]
-
-# Compiled extension
-*.so
-*.pyd
-*.dylib
-
-# Virtual env
-.venv/
-venv/
-
-# Test / tooling caches
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-
 # OS / editor
 .DS_Store
 .idea/
