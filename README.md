@@ -16,3 +16,5 @@
 A lightweight CLI client for the Trading 212 Public API, written in Rust. This is a standalone
 binary which implements only GET endpoints, there are no opportunities to trade in the current version of this tooling.
 using the `t212` command, you can fetch account cash, positions, order history, and security metadata. for personal use and for use with shell scripting.
+
+> **N.B** This tool is unofficial and in no way affiliated with Trading 212
