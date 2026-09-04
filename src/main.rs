@@ -64,11 +64,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let config = config::Config::load(config::Environment::Live)?;
             let client = http::Client::new(config);
 
-            let body = client.get("/equity/account/cash")?;
+            let body = client.get("/equity/account/summary")?;
 
             // TODO: Format JSON to typed output and clean cli
-            let parsed: serde_json::Value = serde_json::from_str(&body)?;
-            println!("{}", serde_json::to_string_pretty(&parsed)?);
+            let cash: models::AccountSummary = serde_json::from_str(&body)?;
+            print_cash(&cash);
         }
         Some(Command::Positions) => {
             let config = config::Config::load(config::Environment::Live)?;
@@ -138,3 +138,14 @@ fn print_pl(label: &str, value: f64, cost: f64, currency: &str) {
     println!("  {:<18} {}", label.dimmed(), coloured);
 }
 
+fn print_cash(s: &models::AccountSummary) {
+    let c = &s.currency;
+
+    println!();
+    println!("{}", "Cash Allocation".blue().bold());
+    println!("  {:<18} {:>12.2} {c}", "Total Uninvested".dimmed(), (s.cash.available_to_trade + s.cash.in_pies + s.cash.reserved_for_orders));
+    println!("  {:<18} {:>12.2} {c}", "Available".dimmed(), (s.cash.available_to_trade));
+    println!("  {:<18} {:>12.2} {c}", "in Pies".dimmed(), (s.cash.in_pies));
+    println!("  {:<18} {:>12.2} {c}", "Reserved".dimmed(), (s.cash.reserved_for_orders));
+    println!();
+}
