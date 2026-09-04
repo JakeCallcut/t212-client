@@ -1,6 +1,7 @@
 mod auth;
 mod config;
 mod http;
+mod models;
 
 use owo_colors::OwoColorize;
 use clap::{Parser, Subcommand};
@@ -56,10 +57,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let client = http::Client::new(config);
 
             let body = client.get("/equity/account/summary")?;
-
-            // TODO: Format JSON to typed output and clean cli
-            let parsed: serde_json::Value = serde_json::from_str(&body)?;
-            println!("{}", serde_json::to_string_pretty(&parsed)?);
+            let summary: models::AccountSummary = serde_json::from_str(&body)?;
+            print_overview(&summary);
         }
         Some(Command::Cash) => {
             let config = config::Config::load(config::Environment::Live)?;
@@ -86,6 +85,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+    ///formats welcome banner
 fn banner() {
     let art = r#"
       _________  ______      ________    ___________   ________
@@ -98,3 +98,43 @@ fn banner() {
     println!("{}", "A read-only Trading 212 API client by Jake".blue().dimmed());
     println!();
 }
+
+    ///print account summary formatted
+fn print_overview(s: &models::AccountSummary) {
+    let c = &s.currency;
+
+    println!();
+    println!("{}", "Account overview".blue().bold());
+    println!("  {:<18} {} ({})", "Account".dimmed(), s.id, c);
+    println!("  {:<18} {:>12.2} {c}", "Total value".dimmed(), s.total_value);
+    println!();
+
+    println!("{}", "Cash".blue().bold());
+    println!("  {:<18} {:>12.2} {c}", "Total Uninvested".dimmed(), (s.cash.available_to_trade + s.cash.in_pies + s.cash.reserved_for_orders));
+    println!();
+
+    println!("{}", "Investments".blue().bold());
+    println!("  {:<18} {:>12.2} {c}", "Current value".dimmed(), s.investments.current_value);
+    println!("  {:<18} {:>12.2} {c}", "Total cost".dimmed(), s.investments.total_cost);
+    print_pl("Unrealised P&L", s.investments.unrealized_profit_loss, s.investments.total_cost, c);
+    print_pl("Realised P&L", s.investments.realized_profit_loss, s.investments.total_cost, c);
+    println!();
+}
+
+    ///compute and format PNL statistic
+fn print_pl(label: &str, value: f64, cost: f64, currency: &str) {
+    //avoid dividing by 0
+    let pct = if cost != 0.0 { value / cost * 100.0 } else { 0.0 };
+
+    //format in currency
+    let text = format!("{value:>12.2} {currency}  ({pct:+.2}%)");
+
+    //choose colour depending on value
+    let coloured = if value >= 0.0 {
+        text.green().to_string()
+    } else {
+        text.red().to_string()
+    };
+    println!("  {:<18} {}", label.dimmed(), coloured);
+}
+

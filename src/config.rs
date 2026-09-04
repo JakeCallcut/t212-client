@@ -1,6 +1,5 @@
 //! Runtime configuration: environment selection and credential resolution.
 
-use std::env;
 use std::fmt;
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
