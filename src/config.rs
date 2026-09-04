@@ -1,16 +1,19 @@
-// Contains all environment configuration including account type and credentials
-#[derive(Default)]
+//! Runtime configuration: environment selection and credential resolution.
+
+use std::env;
+use std::fmt;
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Environment {
-    /// the environment can either be a demo or live account
+    ///Environment can either be live or paper trading account type
     #[default]
     Demo,
     Live,
 }
 
-//
 impl Environment {
-    /// based on environment enum, select the correct API endpoint
-    pub fn base_url(self) -> &'static str {
+    /// choose endpoint based on account type
+    pub fn base_url(&self) -> &'static str {
         match self {
             Environment::Demo => "https://demo.trading212.com/api/v0",
             Environment::Live => "https://live.trading212.com/api/v0",
@@ -18,33 +21,36 @@ impl Environment {
     }
 }
 
+#[derive(Clone)]
 pub struct Credentials {
-    ///holds the users Trading212 credentials
+    ///credentials structure contains both key and secret
     pub key: String,
-    pub secret: Option<String>,
+    pub secret: String,
 }
 
 impl Credentials {
-    /// Read credentials from T212_API_KEY and T212_API_SECRET
-    pub fn from_env() -> Result<Self, ConfigError> {
-        let key = env::var("T212_API_KEY").map_err(|_| ConfigError::MissingApiKey)?;
-        let secret = env::var("T212_API_SECRET").ok();
-        Ok(Credentials { key, secret })
+    /// get credentials from file written by `t212 auth`, otherwise error.
+    pub fn resolve() -> Result<Self, ConfigError> {
+        if let Some((key, secret)) = crate::auth::load_from_file() {
+            return Ok(Credentials { key, secret });
+        }
+        Err(ConfigError::NoCredentials)
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct Config {
-    /// bundle credentials and environment into single class
+    ///config struct to bundle environment and credentials into one
     pub environment: Environment,
     pub credentials: Credentials,
 }
 
 impl Config {
-    /// Build config for the given environment and creds
-    pub fn from_env(environment: Environment) -> Result<Self, ConfigError> {
+    //resolve credentials and environment into struct
+    pub fn load(environment: Environment) -> Result<Self, ConfigError> {
         Ok(Config {
             environment,
-            credentials: Credentials::from_env()?,
+            credentials: Credentials::resolve()?,
         })
     }
 
@@ -53,6 +59,21 @@ impl Config {
     }
 }
 
+//errors
+#[derive(Debug, PartialEq, Eq)]
 pub enum ConfigError {
-    MissingApiKey,
+    NoCredentials,
 }
+
+impl fmt::Display for ConfigError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ConfigError::NoCredentials => write!(
+                f,
+                "no credentials found: run `t212 auth`, or set T212_API_KEY and T212_API_SECRET"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for ConfigError {}
