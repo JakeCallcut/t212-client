@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fs;
 use std::io::{self, Write};
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
 
 #[derive(Serialize, Deserialize)]
 struct StoredCreds {
@@ -53,9 +53,8 @@ pub fn run_auth() -> Result<(), AuthError> {
 
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
-        harden_dir(parent)?;
     }
-    write_private(&path, &contents)?;
+    fs::write(&path, &contents)?;
 
     println!("Credentials saved to {}", path.display());
     Ok(())
@@ -81,7 +80,7 @@ pub fn load_from_file() -> Option<(String, String)> {
     Some((stored.key, stored.secret))
 }
 
-// --- errors ---
+// errors
 
 #[derive(Debug)]
 pub enum AuthError {

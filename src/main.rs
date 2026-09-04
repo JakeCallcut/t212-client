@@ -1,5 +1,6 @@
 mod auth;
 mod config;
+mod http;
 
 use clap::{Parser, Subcommand};
 
@@ -34,7 +35,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match cli.command {
         Command::Auth => auth::run_auth()?,
         Command::Deauth => auth::run_deauth()?,
-        Command::Status => println!("Status: not implemented yet"),
+        Command::Status => {
+            let config = config::Config::load(config::Environment::Live)?;
+            let client = http::Client::new(config);
+            match client.check_connection() {
+                Ok(()) => println!("Connected to Trading 212. Credentials are valid."),
+                Err(e) => {
+                    eprintln!("Not connected: {e}");
+                    std::process::exit(1);
+                }
+            }
+        }
         Command::Overview => println!("Overview: not implemented yet"),
         Command::Analytics => println!("Analytics: not implemented yet"),
         Command::Cash => println!("cash: not implemented yet"),

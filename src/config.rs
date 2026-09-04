@@ -21,7 +21,7 @@ impl Environment {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Credentials {
     ///credentials structure contains both key and secret
     pub key: String,
