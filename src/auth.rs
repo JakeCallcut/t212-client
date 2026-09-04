@@ -1,6 +1,7 @@
 // Storing and clearing Trading 212 API credentials on disk.
 // Credentials are written to ~/.t212/creds.toml, this is a time trade-off
 
+use owo_colors::OwoColorize;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fs;
@@ -25,7 +26,13 @@ pub fn run_auth() -> Result<(), AuthError> {
     let path = creds_path()?;
 
     if path.exists() {
-        print!("Credentials already exist at {}. Overwrite? [y/N] ", path.display());
+        print!(
+            "{} {}. Overwrite? [{}/{}] ",
+            "Credentials already exist at".yellow(),
+            path.display().bold(),
+            "y".red(),
+            "N".green().bold(),
+        );
         io::stdout().flush()?;
         let mut answer = String::new();
         io::stdin().read_line(&mut answer)?;
@@ -35,14 +42,14 @@ pub fn run_auth() -> Result<(), AuthError> {
         }
     }
 
-    print!("API key: ");
+    print!("{}","API key: ".blue().bold());
     io::stdout().flush()?;
     let mut key = String::new();
     io::stdin().read_line(&mut key)?;
     let key = key.trim().to_string();
 
     // rpassword reads without echoing to the terminal.
-    let secret = rpassword::prompt_password("API secret: ")?;
+    let secret = rpassword::prompt_password("API secret: ".blue().bold())?;
     let secret = secret.trim().to_string();
 
     if key.is_empty() || secret.is_empty() {
@@ -56,7 +63,7 @@ pub fn run_auth() -> Result<(), AuthError> {
     }
     fs::write(&path, &contents)?;
 
-    println!("Credentials saved to {}", path.display());
+    println!("{} {}", "Credentials saved to ".green().bold(), path.display().bold());
     Ok(())
 }
 

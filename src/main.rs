@@ -2,6 +2,7 @@ mod auth;
 mod config;
 mod http;
 
+use owo_colors::OwoColorize;
 use clap::{Parser, Subcommand};
 
 /// Read-only command line client for the Trading 212 public API.
@@ -9,7 +10,7 @@ use clap::{Parser, Subcommand};
 #[command(name = "t212", version)]
 struct Cli {
     #[command(subcommand)]
-    command: Command,
+    command: Option<Command>,
 }
 
 #[derive(Subcommand)]
@@ -33,20 +34,24 @@ enum Command {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
     match cli.command {
-        Command::Auth => auth::run_auth()?,
-        Command::Deauth => auth::run_deauth()?,
-        Command::Status => {
-            let config = config::Config::load(config::Environment::Live)?;
+        None => {
+            banner();
+            println!("Run {} to see everything you can do or run {} to log in", "t212 help".bold(), "t212 auth".bold());
+        }
+        Some(Command::Auth) => auth::run_auth()?,
+        Some(Command::Deauth) => auth::run_deauth()?,
+        Some(Command::Status) => {
+            let config = config::Config::load(config::Environment::Demo)?;
             let client = http::Client::new(config);
             match client.check_connection() {
-                Ok(()) => println!("Connected to Trading 212. Credentials are valid."),
+                Ok(()) => println!("{}", "Connected to Trading 212. Credentials are valid.".green().bold()),
                 Err(e) => {
-                    eprintln!("Not connected: {e}");
+                    eprintln!("{}: {e}","Not connected".red().bold());
                     std::process::exit(1);
                 }
             }
         }
-        Command::Overview => {
+        Some(Command::Overview) => {
             let config = config::Config::load(config::Environment::Live)?;
             let client = http::Client::new(config);
 
@@ -56,7 +61,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let parsed: serde_json::Value = serde_json::from_str(&body)?;
             println!("{}", serde_json::to_string_pretty(&parsed)?);
         }
-        Command::Cash => {
+        Some(Command::Cash) => {
             let config = config::Config::load(config::Environment::Live)?;
             let client = http::Client::new(config);
 
@@ -66,7 +71,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let parsed: serde_json::Value = serde_json::from_str(&body)?;
             println!("{}", serde_json::to_string_pretty(&parsed)?);
         }
-        Command::Positions => {
+        Some(Command::Positions) => {
             let config = config::Config::load(config::Environment::Live)?;
             let client = http::Client::new(config);
 
@@ -76,7 +81,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let parsed: serde_json::Value = serde_json::from_str(&body)?;
             println!("{}", serde_json::to_string_pretty(&parsed)?);
         }
-        Command::Analytics => println!("Analytics: not implemented yet"),
+        Some(Command::Analytics) => println!("Analytics: not implemented yet"),
     }
     Ok(())
+}
+
+fn banner() {
+    let art = r#"
+      _________  ______      ________    ___________   ________
+     /_  __/__ \<  /__ \    / ____/ /   /  _/ ____/ | / /_  __/
+      / /  __/ // /__/ /   / /   / /    / // __/ /  |/ / / /
+     / /  / __// // __/   / /___/ /____/ // /___/ /|  / / /
+    /_/  /____/_//____/   \____/_____/___/_____/_/ |_/ /_/
+    "#;
+    println!("{}", art.blue().bold());
+    println!("{}", "A read-only Trading 212 API client by Jake".blue().dimmed());
+    println!();
 }
