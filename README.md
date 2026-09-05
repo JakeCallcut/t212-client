@@ -34,7 +34,7 @@ using the `t212` command, you can fetch account cash, positions, order history, 
 Requires [Rust](https://rustup.rs) (1.83 or newer).
 
 ```bash
-git clone https://github.com/<your-username>/t212-client
+git clone https://github.com/JakeCallcut/t212-client
 cd t212-client
 cargo install --path .
 ```
