@@ -29,3 +29,50 @@ using the `t212` command, you can fetch account cash, positions, order history, 
 - `t212 cash` - show cash allocation
 - `t212 positions` - show open positions
 - (not implemented)`t212 analytics` - show derived metrics from open positions
+
+## Installation
+Requires [Rust](https://rustup.rs) (1.83 or newer).
+
+```bash
+git clone https://github.com/<your-username>/t212-client
+cd t212-client
+cargo install --path .
+```
+
+## Setup
+
+You need a Trading 212 API key. Generate one in the Trading 212 app under
+Settings → API (Beta). Demo and live accounts have **separate** keys.
+
+Store your credentials:
+
+```bash
+t212 auth
+```
+
+This prompts for your key and secret (the secret is hidden as you type) and
+saves them to `~/.t212/creds.toml`.
+
+Check the connection:
+
+```bash
+t212 status
+```
+## Project Structure
+```
+t212-client/
+├── public/                 # logos etc.
+├── src/                    # source directory
+│   ├── auth.rs             # auth and deauth command logic
+│   ├── config.rs           # handles environment and credentials
+│   ├── http.rs             # http endpoint requests
+│   ├── main.rs             # command routing
+│   ├── models.rs           # data models for API responses
+│   └── utils.rs            # helpers etc.
+├── test/                   
+├── Cargo.lock              # lockfile for dep versions
+├── Cargo.toml              # crate specification
+├── .gitignore              
+└── README.md       
+```
+
